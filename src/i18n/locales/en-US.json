@@ -203,6 +203,8 @@
     "limit": "Speed limit",
     "unlimited": "∞",
     "unlimitedHint": "Clear the input to use unlimited speed",
+    "altSpeedHint": "Alternative speed is active. Enter a positive limit or disable it in Settings.",
+    "altSpeedValueRequired": "Enter a positive alternative speed limit",
     "saveSuccess": "Global speed limit updated",
     "saveFailed": "Failed to update global speed limit"
   },

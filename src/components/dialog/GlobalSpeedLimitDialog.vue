@@ -15,28 +15,35 @@
             v-model:value="limitValue"
             :min="1"
             :precision="0"
-            :placeholder="$t('speedLimitDialog.unlimited')"
+            :placeholder="requiresValue ? undefined : $t('speedLimitDialog.unlimited')"
             class="flex-1"
             @keyup.enter="onSave"
           />
           <span class="whitespace-nowrap">KiB/s</span>
         </div>
       </n-form-item>
-      <div class="text-xs opacity-60 pl-[90px]">{{ $t('speedLimitDialog.unlimitedHint') }}</div>
+      <div class="text-xs opacity-60 pl-[90px]">{{ hint }}</div>
     </n-form>
 
     <template #footer>
       <div class="flex justify-end gap-2">
         <n-button :disabled="loading" @click="show = false">{{ $t('common.cancel') }}</n-button>
-        <n-button type="primary" :loading="loading" @click="onSave">{{ $t('common.confirm') }}</n-button>
+        <n-button type="primary" :loading="loading" :disabled="saveDisabled" @click="onSave">{{
+          $t('common.confirm')
+        }}</n-button>
       </div>
     </template>
   </n-modal>
 </template>
 
 <script setup lang="ts">
-import { rpc, type SessionSetArgs } from '@/api/rpc'
+import { rpc } from '@/api/rpc'
 import { useSessionStore } from '@/store'
+import {
+  buildGlobalSpeedLimitArgs,
+  readGlobalSpeedLimitValue,
+  resolveGlobalSpeedLimitConfig
+} from '@/utils/globalSpeedLimit'
 import { useMessage, type InputNumberInst } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 
@@ -51,27 +58,27 @@ const emit = defineEmits<{
 const { t: $t } = useI18n()
 const message = useMessage()
 const sessionStore = useSessionStore()
-const inputRef = ref<InputNumberInst | null>(null)
-const limitValue = ref<number | null>(null)
-const loading = ref(false)
+const inputRef = useTemplateRef<InputNumberInst>('inputRef')
+const limitValue = shallowRef<number | null>(null)
+const loading = shallowRef(false)
 
 const title = computed(() =>
   props.direction === 'download'
     ? $t('speedLimitDialog.downloadTitle')
     : $t('speedLimitDialog.uploadTitle')
 )
-const limitKey = computed<'speed-limit-down' | 'speed-limit-up'>(() =>
-  props.direction === 'download' ? 'speed-limit-down' : 'speed-limit-up'
+const speedLimitConfig = computed(() =>
+  resolveGlobalSpeedLimitConfig(sessionStore.session, props.direction)
 )
-const enabledKey = computed<'speed-limit-down-enabled' | 'speed-limit-up-enabled'>(() =>
-  props.direction === 'download' ? 'speed-limit-down-enabled' : 'speed-limit-up-enabled'
+const requiresValue = computed(() => speedLimitConfig.value.requiresValue)
+const hint = computed(() =>
+  $t(requiresValue.value ? 'speedLimitDialog.altSpeedHint' : 'speedLimitDialog.unlimitedHint')
 )
+const hasValidValue = computed(() => Number.isFinite(Number(limitValue.value)) && Number(limitValue.value) > 0)
+const saveDisabled = computed(() => loading.value || (requiresValue.value && !hasValidValue.value))
 
 function initValue() {
-  const session = sessionStore.session
-  const enabled = Boolean(session?.[enabledKey.value])
-  const value = Number(session?.[limitKey.value])
-  limitValue.value = enabled && Number.isFinite(value) && value > 0 ? value : null
+  limitValue.value = readGlobalSpeedLimitValue(sessionStore.session, speedLimitConfig.value)
 }
 
 function focusInput() {
@@ -83,13 +90,10 @@ async function onSave() {
     return
   }
 
-  const value = Number(limitValue.value)
-  const enabled = Number.isFinite(value) && value > 0
-  const args: SessionSetArgs = {
-    [enabledKey.value]: enabled
-  }
-  if (enabled) {
-    args[limitKey.value] = Math.round(value)
+  const args = buildGlobalSpeedLimitArgs(speedLimitConfig.value, limitValue.value)
+  if (!args) {
+    message.warning($t('speedLimitDialog.altSpeedValueRequired'))
+    return
   }
 
   loading.value = true

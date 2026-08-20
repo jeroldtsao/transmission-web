@@ -203,6 +203,8 @@
     "limit": "速度限制",
     "unlimited": "∞",
     "unlimitedHint": "清空输入框表示不限速",
+    "altSpeedHint": "备用带宽已启用，请输入正数限速，或前往设置关闭备用带宽。",
+    "altSpeedValueRequired": "请输入大于 0 的备用带宽限速",
     "saveSuccess": "全局限速已更新",
     "saveFailed": "全局限速更新失败"
   },
