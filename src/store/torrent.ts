@@ -186,12 +186,13 @@ export const useTorrentStore = defineStore('torrent', () => {
 
     // 目录菜单当前模式（read once，使其参与依赖收集）
     const dirMenuMode = settingStore.setting.dirMenuMode
+    const ignoredTrackerPrefixes = settingStore.setting.ignoredTrackerPrefixes
 
     // 一次循环完成所有计算：统计 + 过滤
     torrents.value.forEach((t, idx) => {
       mapTorrentsIndex[t.id] = idx
       // 将选项全部放到 map 中
-      detailFilterOptions(t, labelsSet, trackerSet, errorStringSet, downloadDirSet, statusSet)
+      detailFilterOptions(t, labelsSet, trackerSet, errorStringSet, downloadDirSet, statusSet, ignoredTrackerPrefixes)
       // 如果通过所有过滤条件，加入结果数组
       if (
         isFilterTorrents(
@@ -203,7 +204,7 @@ export const useTorrentStore = defineStore('torrent', () => {
           errorStringFilter,
           downloadDirFilter,
           dirMenuMode,
-          settingStore.setting.ignoredTrackerPrefixes
+          ignoredTrackerPrefixes
         )
       ) {
         filtered.push(t)
@@ -417,7 +418,7 @@ export const useTorrentStore = defineStore('torrent', () => {
       const old = torrents.value
       let newRes = res?.arguments?.torrents || []
       newRes = newRes.map((t) => {
-        const processed = processTorrent(t)
+        const processed = processTorrent(t, fullFetch)
         let item: Torrent
         const index = computedData.value.mapTorrentsIndex[processed.id]
         if (!fullFetch && index >= 0) {

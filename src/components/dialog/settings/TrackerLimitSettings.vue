@@ -21,7 +21,7 @@
         v-else
         v-model:value="rule.pattern"
         class="pattern-input"
-        :options="trackerOptions"
+        :options="getTrackerOptions(index)"
         :placeholder="$t('trackerLimitSettings.patternPlaceholder')"
         filterable
         tag
@@ -109,6 +109,19 @@ const trackerOptions = computed(() =>
     .filter((item) => item.key !== 'all' && item.key !== 'noTracker')
     .map((item) => ({ label: item.label, value: item.key }))
 )
+
+function getTrackerOptions(currentIndex: number) {
+  const selectedByOtherRules = new Set(
+    rules.value
+      .filter((rule, index) => index !== currentIndex && typeof rule?.pattern === 'string' && rule.pattern.trim())
+      .map((rule) => getTrackerSiteKey(rule.pattern, settingStore.setting.ignoredTrackerPrefixes))
+  )
+  return trackerOptions.value.map((option) => ({
+    ...option,
+    disabled: selectedByOtherRules.has(option.value),
+    label: selectedByOtherRules.has(option.value) ? `${option.label} · ${$t('trackerLimitSettings.configured')}` : option.label
+  }))
+}
 
 const ruleStats = computed(() => {
   const stats = new Map<string, { count: number; upload: number; download: number }>()

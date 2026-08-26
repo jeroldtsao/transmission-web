@@ -254,6 +254,7 @@
     "title": "按 Tracker 站点限速",
     "hint": "规则按顺序匹配 Tracker 域名，并设置匹配种子的单任务限速。多个种子同时上传时，总速度可能是单任务限速乘以任务数；需要控制总带宽时请使用带宽设置。右下角速度是按规则归属的种子速度汇总，不是 Tracker 连接级流量。关闭或删除规则不会覆盖现有限速。",
     "empty": "暂无规则",
+    "configured": "已配置",
     "enabled": "启用规则",
     "patternPlaceholder": "选择站点或输入域名",
     "uploadPlaceholder": "上传不限速",

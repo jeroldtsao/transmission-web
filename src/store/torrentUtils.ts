@@ -5,7 +5,6 @@ import { getTorrentProgress } from '@/utils/torrentProgress'
 import { ShuffleOutline } from '@vicons/ionicons5'
 import i18n from '@/i18n'
 import { isFunction } from 'lodash-es'
-import { useSettingStore } from './setting'
 
 export interface IMenuItem {
   icon?: Component
@@ -36,10 +35,22 @@ export const getTrackerSiteKey = (value: string, ignoredPrefixes: string[] = [])
   return labels.join('.')
 }
 
+const trackerSitesCache = new Map<
+  number,
+  { trackerStats: Torrent['trackerStats']; trackerList: string; prefixes: string; sites: Set<string> }
+>()
+
 /** 获取一个种子关联的去重站点集合，兼容 trackerStats 尚未返回的阶段。 */
 export const getTorrentTrackerSites = (torrent: Torrent, ignoredPrefixes: string[] = []) => {
+  const trackerStats = torrent.trackerStats || []
+  const trackerList = torrent.trackerList || ''
+  const prefixes = ignoredPrefixes.join('|')
+  const cached = trackerSitesCache.get(torrent.id)
+  if (cached?.trackerStats === trackerStats && cached.trackerList === trackerList && cached.prefixes === prefixes) {
+    return cached.sites
+  }
   const sites = new Set<string>()
-  for (const tracker of torrent.trackerStats || []) {
+  for (const tracker of trackerStats) {
     if (tracker.host) {
       sites.add(getTrackerSiteKey(String(tracker.host), ignoredPrefixes))
     }
@@ -50,6 +61,7 @@ export const getTorrentTrackerSites = (torrent: Torrent, ignoredPrefixes: string
     }
   }
   sites.delete('')
+  trackerSitesCache.set(torrent.id, { trackerStats, trackerList, prefixes, sites })
   return sites
 }
 
@@ -60,10 +72,10 @@ export const detailFilterOptions = function (
   trackerSet: Map<string, IMenuItem>,
   errorStringSet: Map<string, IMenuItem>,
   downloadDirSet: Map<string, IMenuItem>,
-  statusSet: Map<string, IMenuItem>
+  statusSet: Map<string, IMenuItem>,
+  ignoredTrackerPrefixes: string[] = []
 ) {
   const $t = i18n.global.t
-  const settingStore = useSettingStore()
   // === 1. 统计各种选项（用于生成过滤选项） ===
   // labels 统计
   if (Array.isArray(t.labels) && t.labels.length > 0) {
@@ -77,7 +89,7 @@ export const detailFilterOptions = function (
   }
 
   // tracker 统计：同一个种子对同一个站点只计数一次
-  const trackerSites = getTorrentTrackerSites(t, settingStore.setting.ignoredTrackerPrefixes)
+  const trackerSites = getTorrentTrackerSites(t, ignoredTrackerPrefixes)
   if (trackerSites.size > 0) {
     trackerSites.forEach((site) => {
       const prev = trackerSet.get(site)
@@ -313,14 +325,14 @@ export const isFilterTorrents = function (
   }
 
   // tracker 过滤
-  if (
-    shouldInclude &&
-    trackerFilter.value &&
-    trackerFilter.value !== 'all' &&
-    !(trackerFilter.value == 'noTracker' && getTorrentTrackerSites(t, ignoredTrackerPrefixes).size === 0) &&
-    !getTorrentTrackerSites(t, ignoredTrackerPrefixes).has(trackerFilter.value)
-  ) {
-    shouldInclude = false
+  if (shouldInclude && trackerFilter.value && trackerFilter.value !== 'all') {
+    const trackerSites = getTorrentTrackerSites(t, ignoredTrackerPrefixes)
+    if (
+      !(trackerFilter.value === 'noTracker' && trackerSites.size === 0) &&
+      !trackerSites.has(trackerFilter.value)
+    ) {
+      shouldInclude = false
+    }
   }
 
   // 错误过滤
@@ -502,10 +514,13 @@ export const getPeersTotal = (torrent: Torrent): number => {
 }
 
 // 处理 torrent 数据
-export const processTorrent = (torrent: Torrent) => {
+export const processTorrent = (torrent: Torrent, includeDerivedFields = true) => {
   const processed = { ...torrent }
   if (typeof torrent.downloadDir === 'string') {
     processed.downloadDir = torrent.downloadDir.replace(/\\/g, '/')
+  }
+  if (!includeDerivedFields) {
+    return processed
   }
   return {
     ...processed,

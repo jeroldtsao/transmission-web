@@ -254,6 +254,7 @@
     "title": "Per-tracker limits",
     "hint": "Rules match tracker hostnames in order and apply per-torrent limits. When multiple torrents upload at once, total speed can grow with the number of matched torrents; use Bandwidth settings for a global cap. The status-bar speed is an aggregate of torrents assigned to each rule, not tracker-connection traffic. Disabling or deleting a rule leaves existing limits unchanged.",
     "empty": "No rules",
+    "configured": "Configured",
     "enabled": "Enable rule",
     "patternPlaceholder": "Select a site or enter a hostname",
     "uploadPlaceholder": "Unlimited upload",
