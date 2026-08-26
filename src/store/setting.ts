@@ -33,6 +33,14 @@ export interface IPolling {
   torrentInterval: number
 }
 
+export interface TrackerLimitRule {
+  id: string
+  enabled: boolean
+  pattern: string
+  uploadLimit: number | null
+  downloadLimit: number | null
+}
+
 export const useSettingStore = defineStore('setting', () => {
   const setting = useStorage(
     'setting',
@@ -57,7 +65,9 @@ export const useSettingStore = defineStore('setting', () => {
       // 用户自定义的下载目录字典（始终用于联想，不受历史联想开关影响）
       customDownloadDirs: [] as string[],
       // 忽略域名中的部分前缀
-      ignoredTrackerPrefixes: ['t', 'tr', 'tk', 'tracker', 'bt', 'open', 'opentracker', 'pt']
+      ignoredTrackerPrefixes: ['t', 'tr', 'tk', 'tracker', 'bt', 'open', 'opentracker', 'pt'],
+      // 按 tracker 域名匹配的种子级限速规则
+      trackerLimitRules: [] as TrackerLimitRule[]
     },
     localStorage,
     { mergeDefaults: true, deep: true, writeDefaults: true }

@@ -14,6 +14,45 @@ export interface IMenuItem {
   label?: string
 }
 
+/** 将 Tracker 地址转换为适合展示和匹配的站点键。 */
+export const getTrackerSiteKey = (value: string, ignoredPrefixes: string[] = []) => {
+  let host = value.trim().toLowerCase()
+  try {
+    host = new URL(host.includes('://') ? host : `https://${host}`).hostname.toLowerCase()
+  } catch {
+    host = host.replace(/^[a-z]+:\/\//, '').split('/')[0].replace(/:\d+$/, '')
+  }
+  const labels = host.split('.').filter(Boolean)
+  if (labels.length > 2) {
+    const prefix = labels[0]
+    const prefixes = new Set(['www', ...ignoredPrefixes.map((item) => item.trim().toLowerCase()).filter(Boolean)])
+    const isIgnoredPrefix = Array.from(prefixes).some((item) => {
+      return prefix === item || (prefix.startsWith(item) && /^\d+$/.test(prefix.slice(item.length)))
+    })
+    if (isIgnoredPrefix) {
+      labels.shift()
+    }
+  }
+  return labels.join('.')
+}
+
+/** 获取一个种子关联的去重站点集合，兼容 trackerStats 尚未返回的阶段。 */
+export const getTorrentTrackerSites = (torrent: Torrent, ignoredPrefixes: string[] = []) => {
+  const sites = new Set<string>()
+  for (const tracker of torrent.trackerStats || []) {
+    if (tracker.host) {
+      sites.add(getTrackerSiteKey(String(tracker.host), ignoredPrefixes))
+    }
+  }
+  for (const line of (torrent.trackerList || '').split(/\s+/)) {
+    if (line) {
+      sites.add(getTrackerSiteKey(line, ignoredPrefixes))
+    }
+  }
+  sites.delete('')
+  return sites
+}
+
 // 将所有的选项放到 map
 export const detailFilterOptions = function (
   t: Torrent,
@@ -37,21 +76,12 @@ export const detailFilterOptions = function (
     labelsSet.set('noLabels', { count: (prev?.count || 0) + 1, label: $t('common.noLabels') })
   }
 
-  // tracker 统计
-  if (t.trackerStats.length > 0) {
-    t.trackerStats.forEach((tracker: TrackerStat) => {
-      let host = tracker.host || ''
-      const portMatch = portRe.exec(host)
-      if (portMatch != null) {
-        host = host.substring(0, portMatch.index)
-      }
-      const prefixMatch = settingStore.ignoredTrackerPrefixesReg.exec(host)
-      // console.debug("prefixMatch", prefixMatch, settingStore.ignoredTrackerPrefixesReg)
-      if (prefixMatch?.groups !== undefined) {
-        host = host.substring(prefixMatch.groups.prefix.length + 1)
-      }
-      const prev = trackerSet.get(host)
-      trackerSet.set(host, { count: (prev?.count || 0) + 1 })
+  // tracker 统计：同一个种子对同一个站点只计数一次
+  const trackerSites = getTorrentTrackerSites(t, settingStore.setting.ignoredTrackerPrefixes)
+  if (trackerSites.size > 0) {
+    trackerSites.forEach((site) => {
+      const prev = trackerSet.get(site)
+      trackerSet.set(site, { count: (prev?.count || 0) + 1 })
     })
   } else {
     const prev = trackerSet.get('noTracker')
@@ -249,7 +279,8 @@ export const isFilterTorrents = function (
   trackerFilter: globalThis.Ref<string, string>,
   errorStringFilter: globalThis.Ref<string, string>,
   downloadDirFilter: globalThis.Ref<string, string>,
-  dirMenuMode: 'list' | 'tree' = 'list'
+  dirMenuMode: 'list' | 'tree' = 'list',
+  ignoredTrackerPrefixes: string[] = []
 ) {
   // === 2. 同时进行过滤判断 ===
   let shouldInclude = true
@@ -286,8 +317,8 @@ export const isFilterTorrents = function (
     shouldInclude &&
     trackerFilter.value &&
     trackerFilter.value !== 'all' &&
-    !(trackerFilter.value == 'noTracker' && t.trackerStats.length === 0) &&
-    !t.trackerStats.some((tracker) => tracker.host.includes(trackerFilter.value))
+    !(trackerFilter.value == 'noTracker' && getTorrentTrackerSites(t, ignoredTrackerPrefixes).size === 0) &&
+    !getTorrentTrackerSites(t, ignoredTrackerPrefixes).has(trackerFilter.value)
   ) {
     shouldInclude = false
   }
@@ -378,7 +409,7 @@ export const getTorrentError = (t: Torrent): string => {
   let trackerError = ''
   let noTrackerError = false
 
-  for (const trackerStat of t.trackerStats) {
+  for (const trackerStat of t.trackerStats || []) {
     let err = ''
     if ((trackerStat.hasAnnounced as boolean) && !(trackerStat.lastAnnounceSucceeded as boolean)) {
       err = trackerStat.lastAnnounceResult as string
@@ -422,7 +453,7 @@ export const getTrackerAnnounceState = (tracker: TrackerStat) => {
 
 // 获取 tracker 状态
 export const getTrackerStatus = (torrent: Torrent): string => {
-  const trackers = torrent.trackerStats
+  const trackers = torrent.trackerStats || []
   if (torrent.status === Status.stopped || trackers.length === 0) {
     return ''
   }
@@ -434,10 +465,11 @@ export const prefixRe = /^((t|tr|tk|tracker|bt|open|opentracker)\d*)\.[^.]+\.[^.
 
 // 获取 torrent 主要 tracker
 export const getTorrentMainTracker = (torrent: Torrent): string => {
-  if (torrent.trackerStats.length === 0) {
+  const trackerStats = torrent.trackerStats || []
+  if (trackerStats.length === 0) {
     return '没有 Tracker'
   }
-  let host = torrent.trackerStats[0].host as string
+  let host = trackerStats[0].host as string
   const portMatch = portRe.exec(host)
   if (portMatch != null) {
     host = host.substring(0, portMatch.index)
@@ -451,8 +483,9 @@ export const getTorrentMainTracker = (torrent: Torrent): string => {
 
 // 获取做种总数
 export const getSeedsTotal = (torrent: Torrent): number => {
-  let seeds = torrent.trackerStats.length > 0 ? 0 : -1
-  torrent.trackerStats.forEach((tracker: TrackerStat) => {
+  const trackerStats = torrent.trackerStats || []
+  let seeds = trackerStats.length > 0 ? 0 : -1
+  trackerStats.forEach((tracker: TrackerStat) => {
     seeds = Math.max(seeds, tracker.seederCount as number)
   })
   return seeds
@@ -460,8 +493,9 @@ export const getSeedsTotal = (torrent: Torrent): number => {
 
 // 获取下载总数
 export const getPeersTotal = (torrent: Torrent): number => {
-  let peers = torrent.trackerStats.length > 0 ? 0 : -1
-  torrent.trackerStats.forEach((tracker: TrackerStat) => {
+  const trackerStats = torrent.trackerStats || []
+  let peers = trackerStats.length > 0 ? 0 : -1
+  trackerStats.forEach((tracker: TrackerStat) => {
     peers = Math.max(peers, tracker.leecherCount as number)
   })
   return peers
@@ -469,9 +503,12 @@ export const getPeersTotal = (torrent: Torrent): number => {
 
 // 处理 torrent 数据
 export const processTorrent = (torrent: Torrent) => {
+  const processed = { ...torrent }
+  if (typeof torrent.downloadDir === 'string') {
+    processed.downloadDir = torrent.downloadDir.replace(/\\/g, '/')
+  }
   return {
-    ...torrent,
-    downloadDir: (torrent.downloadDir as string).replace(/\\/g, '/'),
+    ...processed,
     cachedError: getTorrentError(torrent),
     cachedTrackerStatus: getTrackerStatus(torrent),
     // 主要的 tracker，并进行格式化
