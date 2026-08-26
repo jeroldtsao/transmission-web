@@ -73,7 +73,7 @@ export const useSettingStore = defineStore('setting', () => {
         torrentDetailInterval: 5,
         torrentInterval: 5
       },
-      menuExpandedKeys: ['status', 'labels', 'dir'],
+      menuExpandedKeys: ['status', 'labels'],
       // 目录侧边栏展示模式：list = 扁平展示所有目录；tree = 按层级折叠
       dirMenuMode: 'list' as 'list' | 'tree',
       // 添加种子/修改目录时是否使用历史下载目录作为联想
@@ -88,6 +88,14 @@ export const useSettingStore = defineStore('setting', () => {
     localStorage,
     { mergeDefaults: true, deep: true, writeDefaults: true }
   )
+  // 旧版本默认展开目录，升级时仅迁移这组默认值；用户自定义的展开状态保持不变。
+  if (
+    Array.isArray(setting.value.menuExpandedKeys) &&
+    setting.value.menuExpandedKeys.length === 3 &&
+    ['status', 'labels', 'dir'].every((key) => setting.value.menuExpandedKeys.includes(key))
+  ) {
+    setting.value.menuExpandedKeys = ['status', 'labels']
+  }
   // 兼容早期版本可能写入的 null/非法规则，避免页面初始化时调用 trim 崩溃。
   const normalizedTrackerRules = normalizeTrackerLimitRules(setting.value.trackerLimitRules)
   if (JSON.stringify(normalizedTrackerRules) !== JSON.stringify(setting.value.trackerLimitRules)) {
