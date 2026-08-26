@@ -127,7 +127,8 @@
     "filesAdded": "Files Added",
     "sessionCount": "Sessions",
     "activeTime": "Active Time",
-    "trackerSites": "Tracker Sites"
+    "trackerUpload": "Tracker Upload",
+    "trackerUploadHint": "Attributed to the primary tracker; multi-tracker torrents are counted once to avoid double counting"
   },
   "aboutDialog": {
     "title": "About Transmission Web",

@@ -127,7 +127,8 @@
     "filesAdded": "已添加文件",
     "sessionCount": "会话次数",
     "activeTime": "活动时间",
-    "trackerSites": "站点分布"
+    "trackerUpload": "站点上传",
+    "trackerUploadHint": "按主 Tracker 归属统计；多 Tracker 种子只计入一个站点，不会重复计算"
   },
   "aboutDialog": {
     "title": "关于 Transmission Web",

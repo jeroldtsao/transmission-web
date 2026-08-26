@@ -14,7 +14,7 @@ import { formatSize, timeToStr } from '@/utils'
 import { useI18n } from 'vue-i18n'
 import { BarChartOutline } from '@vicons/ionicons5'
 import { renderIcon } from '@/utils'
-import { getTorrentTrackerSites } from '@/store/torrentUtils'
+import { getTrackerSiteKey } from '@/store/torrentUtils'
 
 const { t } = useI18n()
 const statsStore = useStatsStore()
@@ -32,17 +32,23 @@ function statItem(label: string, value: string) {
 }
 
 const trackerSiteStats = computed(() => {
-  const stats = new Map<string, number>()
+  const stats = new Map<string, { uploaded: number; torrents: number }>()
   const ignoredPrefixes = settingStore.setting.ignoredTrackerPrefixes
   torrentStore.torrents.forEach((torrent) => {
-    getTorrentTrackerSites(torrent, ignoredPrefixes).forEach((site) => {
-      stats.set(site, (stats.get(site) || 0) + 1)
-    })
+    const firstTracker = torrent.trackerStats?.[0]?.host || (torrent.trackerList || '').split(/\s+/).find(Boolean) || ''
+    const site = getTrackerSiteKey(firstTracker, ignoredPrefixes)
+    if (!site) {
+      return
+    }
+    const current = stats.get(site) || { uploaded: 0, torrents: 0 }
+    current.uploaded += torrent.uploadedEver || 0
+    current.torrents += 1
+    stats.set(site, current)
   })
-  return Array.from(stats.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  return Array.from(stats.entries()).sort((a, b) => b[1].uploaded - a[1].uploaded || a[0].localeCompare(b[0]))
 })
 
-function trackerSiteItem(site: string, count: number) {
+function trackerSiteItem(site: string, stat: { uploaded: number; torrents: number }) {
   return {
     label: () =>
       h(
@@ -50,7 +56,7 @@ function trackerSiteItem(site: string, count: number) {
         { class: 'flex justify-between w-full pr-2 gap-2' },
         [
           h('span', { class: 'stats-site-label', title: site }, site),
-          h('span', { class: 'opacity-60' }, String(count))
+          h('span', { class: 'opacity-60' }, formatSize(stat.uploaded))
         ]
       ),
     key: `stats-site-${site}`
@@ -92,9 +98,14 @@ const menuOptions = computed(() => {
           ],
         },
         {
-          label: `${t('statsDialog.trackerSites')}（${trackerSiteStats.value.length}）`,
+          label: () =>
+            h(
+              'span',
+              { title: t('statsDialog.trackerUploadHint') },
+              `${t('statsDialog.trackerUpload')}（${trackerSiteStats.value.length}）`
+            ),
           key: 'stats-tracker-sites',
-          children: trackerSiteStats.value.map(([site, count]) => trackerSiteItem(site, count))
+          children: trackerSiteStats.value.map(([site, stat]) => trackerSiteItem(site, stat))
         }
       ],
     },
