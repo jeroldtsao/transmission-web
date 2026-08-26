@@ -15,11 +15,14 @@ import { useI18n } from 'vue-i18n'
 import { BarChartOutline } from '@vicons/ionicons5'
 import { renderIcon } from '@/utils'
 import { getTrackerSiteKey } from '@/store/torrentUtils'
+import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
+import { NEllipsis } from 'naive-ui'
 
 const { t } = useI18n()
 const statsStore = useStatsStore()
 const settingStore = useSettingStore()
 const torrentStore = useTorrentStore()
+const isMobile = useIsSmallScreen()
 
 function statItem(label: string, value: string) {
   return {
@@ -55,7 +58,26 @@ function trackerSiteItem(site: string, stat: { uploaded: number; torrents: numbe
         'div',
         { class: 'flex justify-between w-full pr-2 gap-2' },
         [
-          h('span', { class: 'stats-site-label', title: site }, site),
+          h(
+            NEllipsis,
+            {
+              class: 'stats-site-label',
+              tooltip: {
+                trigger: isMobile.value ? 'click' : 'hover',
+                placement: isMobile.value ? 'bottom-start' : 'right',
+                maxWidth: isMobile.value ? undefined : 520,
+                contentStyle: {
+                  maxWidth: 'calc(100vw - 32px)',
+                  whiteSpace: 'normal',
+                  overflowWrap: 'anywhere'
+                }
+              }
+            },
+            {
+              default: () => site,
+              tooltip: () => site
+            }
+          ),
           h('span', { class: 'opacity-60' }, formatSize(stat.uploaded))
         ]
       ),
@@ -115,9 +137,8 @@ const menuOptions = computed(() => {
 
 <style scoped lang="less">
 :deep(.stats-site-label) {
+  display: block;
+  width: 100%;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 </style>
