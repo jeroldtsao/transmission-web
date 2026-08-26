@@ -9,15 +9,17 @@
 
 <script setup lang="ts">
 import { useStatsStore } from '@/store/stats'
-import { useSettingStore } from '@/store'
+import { useSettingStore, useTorrentStore } from '@/store'
 import { formatSize, timeToStr } from '@/utils'
 import { useI18n } from 'vue-i18n'
 import { BarChartOutline } from '@vicons/ionicons5'
 import { renderIcon } from '@/utils'
+import { getTorrentTrackerSites } from '@/store/torrentUtils'
 
 const { t } = useI18n()
 const statsStore = useStatsStore()
 const settingStore = useSettingStore()
+const torrentStore = useTorrentStore()
 
 function statItem(label: string, value: string) {
   return {
@@ -26,6 +28,32 @@ function statItem(label: string, value: string) {
       h('span', value),
     ]),
     key: `stats-${label}`,
+  }
+}
+
+const trackerSiteStats = computed(() => {
+  const stats = new Map<string, number>()
+  const ignoredPrefixes = settingStore.setting.ignoredTrackerPrefixes
+  torrentStore.torrents.forEach((torrent) => {
+    getTorrentTrackerSites(torrent, ignoredPrefixes).forEach((site) => {
+      stats.set(site, (stats.get(site) || 0) + 1)
+    })
+  })
+  return Array.from(stats.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+})
+
+function trackerSiteItem(site: string, count: number) {
+  return {
+    label: () =>
+      h(
+        'div',
+        { class: 'flex justify-between w-full pr-2 gap-2' },
+        [
+          h('span', { class: 'stats-site-label', title: site }, site),
+          h('span', { class: 'opacity-60' }, String(count))
+        ]
+      ),
+    key: `stats-site-${site}`
   }
 }
 
@@ -63,8 +91,22 @@ const menuOptions = computed(() => {
             statItem(t('statsDialog.activeTime'), cur ? (timeToStr(cur.secondsActive, false) || '0s') : '-'),
           ],
         },
+        {
+          label: `${t('statsDialog.trackerSites')}（${trackerSiteStats.value.length}）`,
+          key: 'stats-tracker-sites',
+          children: trackerSiteStats.value.map(([site, count]) => trackerSiteItem(site, count))
+        }
       ],
     },
   ]
 })
 </script>
+
+<style scoped lang="less">
+:deep(.stats-site-label) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

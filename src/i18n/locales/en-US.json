@@ -126,7 +126,8 @@
     "downloaded": "Downloaded",
     "filesAdded": "Files Added",
     "sessionCount": "Sessions",
-    "activeTime": "Active Time"
+    "activeTime": "Active Time",
+    "trackerSites": "Tracker Sites"
   },
   "aboutDialog": {
     "title": "About Transmission Web",

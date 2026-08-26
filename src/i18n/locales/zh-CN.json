@@ -126,7 +126,8 @@
     "downloaded": "已下载",
     "filesAdded": "已添加文件",
     "sessionCount": "会话次数",
-    "activeTime": "活动时间"
+    "activeTime": "活动时间",
+    "trackerSites": "站点分布"
   },
   "aboutDialog": {
     "title": "关于 Transmission Web",
