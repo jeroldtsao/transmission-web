@@ -95,10 +95,8 @@ const { t: $t } = useI18n()
 
 const session = computed(() => sessionStore.session)
 const torrents = computed(() => torrentStore.torrents)
-const totalSize = computed(() => torrents.value.reduce((sum, t) => sum + (t.sizeWhenDone || 0), 0))
-
-const computedFields = computed(() => {
-  return torrents.value.reduce(
+const transferSummary = computed(() =>
+  torrents.value.reduce(
     (prev, t) => {
       prev.totalSize += t.sizeWhenDone || 0
       prev.downRate += t.rateDownload || 0
@@ -111,7 +109,9 @@ const computedFields = computed(() => {
       upRate: 0
     }
   )
-})
+)
+const totalSize = computed(() => transferSummary.value.totalSize)
+const computedFields = computed(() => transferSummary.value)
 const selectedKeys = computed(() => torrentStore.selectedKeys || [])
 const selectedSize = computed(() => {
   if (!selectedKeys.value.length) {
