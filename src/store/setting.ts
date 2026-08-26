@@ -41,6 +41,22 @@ export interface TrackerLimitRule {
   downloadLimit: number | null
 }
 
+const normalizeTrackerLimitRules = (value: unknown): TrackerLimitRule[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
+    .map((item, index) => ({
+      id: typeof item.id === 'string' && item.id ? item.id : `tracker-rule-${index}`,
+      enabled: item.enabled !== false,
+      pattern: typeof item.pattern === 'string' ? item.pattern : '',
+      uploadLimit: typeof item.uploadLimit === 'number' && Number.isFinite(item.uploadLimit) ? item.uploadLimit : null,
+      downloadLimit:
+        typeof item.downloadLimit === 'number' && Number.isFinite(item.downloadLimit) ? item.downloadLimit : null
+    }))
+}
+
 export const useSettingStore = defineStore('setting', () => {
   const setting = useStorage(
     'setting',
@@ -72,6 +88,11 @@ export const useSettingStore = defineStore('setting', () => {
     localStorage,
     { mergeDefaults: true, deep: true, writeDefaults: true }
   )
+  // 兼容早期版本可能写入的 null/非法规则，避免页面初始化时调用 trim 崩溃。
+  const normalizedTrackerRules = normalizeTrackerLimitRules(setting.value.trackerLimitRules)
+  if (JSON.stringify(normalizedTrackerRules) !== JSON.stringify(setting.value.trackerLimitRules)) {
+    setting.value.trackerLimitRules = normalizedTrackerRules
+  }
   // 侧边栏宽度
   const sidebarWidth = useStorage('sidebarWidth', 224, undefined)
 

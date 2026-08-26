@@ -16,7 +16,7 @@ export interface IMenuItem {
 
 /** 将 Tracker 地址转换为适合展示和匹配的站点键。 */
 export const getTrackerSiteKey = (value: string, ignoredPrefixes: string[] = []) => {
-  let host = value.trim().toLowerCase()
+  let host = typeof value === 'string' ? value.trim().toLowerCase() : ''
   try {
     host = new URL(host.includes('://') ? host : `https://${host}`).hostname.toLowerCase()
   } catch {

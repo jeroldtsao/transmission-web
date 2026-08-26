@@ -114,7 +114,13 @@ export default defineConfig(({ mode }) => {
           enabled: true
         },
         workbox: {
-          cleanupOutdatedCaches: true
+          cleanupOutdatedCaches: true,
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }: { url: URL }) => url.pathname.endsWith('/transmission/rpc'),
+              handler: 'NetworkOnly'
+            }
+          ]
         }
       })
     ],

@@ -116,7 +116,7 @@ const ruleStats = computed(() => {
   torrentStore.torrents.forEach((torrent) => {
     const sites = getTorrentTrackerSites(torrent, ignoredPrefixes)
     const ruleIndex = rules.value.findIndex((rule) => {
-      if (!rule.enabled || !rule.pattern.trim()) {
+      if (!rule || !rule.enabled || typeof rule.pattern !== 'string' || !rule.pattern.trim()) {
         return false
       }
       const pattern = getTrackerSiteKey(rule.pattern, ignoredPrefixes)

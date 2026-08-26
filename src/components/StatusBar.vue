@@ -124,7 +124,12 @@ const selectedSize = computed(() => {
 
 const trackerSpeedStats = computed(() => {
   const rules = (settingStore.setting.trackerLimitRules || []).filter(
-    (rule) => rule.enabled && rule.pattern.trim() && (rule.uploadLimit != null || rule.downloadLimit != null)
+    (rule) =>
+      rule &&
+      rule.enabled &&
+      typeof rule.pattern === 'string' &&
+      rule.pattern.trim() &&
+      (rule.uploadLimit != null || rule.downloadLimit != null)
   )
   const stats = rules.map((rule) => ({
     id: rule.id,

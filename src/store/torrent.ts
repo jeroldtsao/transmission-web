@@ -307,7 +307,12 @@ export const useTorrentStore = defineStore('torrent', () => {
       return
     }
     const rules = (settingStore.setting.trackerLimitRules || []).filter(
-      (rule) => rule.enabled && rule.pattern.trim() && (rule.uploadLimit != null || rule.downloadLimit != null)
+      (rule) =>
+        rule &&
+        rule.enabled &&
+        typeof rule.pattern === 'string' &&
+        rule.pattern.trim() &&
+        (rule.uploadLimit != null || rule.downloadLimit != null)
     )
     const itemById = new Map(items.map((item) => [item.id, item]))
     const grouped = new Map<string, { ids: number[]; args: Record<string, unknown> }>()
