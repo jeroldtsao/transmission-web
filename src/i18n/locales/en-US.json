@@ -224,7 +224,6 @@
   "otherTorrentSetting": {
     "title": "Modify Speed Limits and Restrictions",
     "selectedCount": "Selected count: {count}",
-    "useGlobalUploadLimit": "Use global upload limit",
     "sequentialDownload": "Sequential download",
     "enableDownloadLimit": "Enable maximum download speed limit",
     "enableUploadLimit": "Enable maximum upload speed limit",
@@ -235,7 +234,11 @@
     "torrent": "Torrent",
     "unlimited": "Unlimited",
     "modifySuccess": "Modified successfully",
-    "modifyFailed": "Failed to modify"
+    "modifyFailed": "Failed to modify",
+    "honorsSessionLimits": "Global speed limit",
+    "honorsKeep": "Keep unchanged",
+    "honorsHonor": "Honor global limit",
+    "honorsIgnore": "Ignore (bypass global)"
   },
   "changeTracker": {
     "title": "Modify Torrent Tracker",
@@ -265,7 +268,22 @@
     "remove": "Remove rule",
     "moveUp": "Move rule up",
     "moveDown": "Move rule down",
-    "liveStats": "{count} matched torrents · current ↑ {upload} · ↓ {download}"
+    "liveStats": "{count} matched torrents · current ↑ {upload} · ↓ {download}",
+    "serverHint": "Tracker limits run server-side through bandwidth groups: one group per site, all matched torrents share the same speed budget, and it keeps working with no page open. Groups always honor session limits, so the effective speed is the lower of the site limit and the global limit. Rule changes are written to the daemon immediately; while a page is open, matching torrents are synced into their site group automatically (no server-side component to install). Torrents added while no page is open join their group the next time the UI is opened; meanwhile they still honor the global limit.",
+    "loadFailed": "Failed to load server bandwidth groups: {message}",
+    "importLegacy": "Import local rules",
+    "importLegacyConfirm": "Import the legacy rules stored in this browser as server-side bandwidth groups and clean up the per-torrent limits they applied?",
+    "importLegacySuccess": "Imported {rules} rules, updated {torrents} torrents, cleared {limits} per-torrent limits",
+    "repairGlobal": "Restore global limits",
+    "repairGlobalConfirm": "Make every torrent that ignores the global limit honor it again?",
+    "repairGlobalSuccess": "Restored global limits for {count} torrents",
+    "clearTorrentLimits": "Clear per-torrent site limits",
+    "clearTorrentLimitsConfirm": "Clear per-torrent limits for torrents already assigned to a site bandwidth group (keeping only group and global limits)?",
+    "clearTorrentLimitsSuccess": "Cleared per-torrent limits for {count} torrents",
+    "saveSuccess": "Saved",
+    "saveFailed": "Failed to save",
+    "saving": "Saving…",
+    "autoSaved": "Rules are stored as server-side bandwidth groups and saved automatically"
   },
   "downloadSettings": {
     "title": "Download Settings",

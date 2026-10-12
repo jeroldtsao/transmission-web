@@ -82,8 +82,10 @@ export const useSettingStore = defineStore('setting', () => {
       customDownloadDirs: [] as string[],
       // 忽略域名中的部分前缀
       ignoredTrackerPrefixes: ['t', 'tr', 'tk', 'tracker', 'bt', 'open', 'opentracker', 'pt'],
-      // 按 tracker 域名匹配的种子级限速规则
-      trackerLimitRules: [] as TrackerLimitRule[]
+      // 按 tracker 域名匹配的种子级限速规则（Transmission 3 / 旧版本兼容；4.0+ 使用服务端带宽组）
+      trackerLimitRules: [] as TrackerLimitRule[],
+      // 是否已把本地规则迁移到服务端带宽组
+      trackerLimitRulesMigrated: false
     },
     localStorage,
     { mergeDefaults: true, deep: true, writeDefaults: true }
@@ -206,8 +208,18 @@ export const useSettingStore = defineStore('setting', () => {
     }
   )
 
+  const setTrackerLimitRulesMigrated = (value: boolean) => {
+    setting.value.trackerLimitRulesMigrated = value
+  }
+
   const changeIgnoredTrackerPrefixes = (prefixes: string[]) => {
     setting.value.ignoredTrackerPrefixes = prefixes
+  }
+
+  // 站点限速执行方式：null = 尚未判定；true = 服务端带宽组；false = 前端种子级限速（RPC < 17）
+  const siteLimitServerEnabled = ref<boolean | null>(null)
+  function setSiteLimitServerEnabled(value: boolean | null) {
+    siteLimitServerEnabled.value = value
   }
 
 
@@ -238,6 +250,9 @@ export const useSettingStore = defineStore('setting', () => {
     headerHeight,
     footerHeight,
     changeIgnoredTrackerPrefixes,
-    menuExpandedKeys
+    setTrackerLimitRulesMigrated,
+    menuExpandedKeys,
+    siteLimitServerEnabled,
+    setSiteLimitServerEnabled
   }
 })

@@ -16,6 +16,10 @@ export const useSessionStore = defineStore('session', () => {
       if (res?.arguments) {
         session.value = res.arguments
         document.title = `Transmission - ${session.value.version?.replace(/\(.+\)/, '')}`
+        // Transmission 4.0（RPC 17）起支持带宽组，站点限速走服务端执行
+        settingStore.setSiteLimitServerEnabled(
+          rpcVersion.value >= 17 || Boolean(session.value.version?.startsWith('4.'))
+        )
         return true
       }
     } catch (e: any) {

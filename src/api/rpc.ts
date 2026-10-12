@@ -514,6 +514,38 @@ export interface TorrentGetResponse {
   result: string
 }
 
+/**
+ * 带宽组（Transmission 4.0+ / RPC >= 17）。
+ * 组内种子共享同一份速度预算，站点限速用它来实现服务端限速。
+ */
+export interface BandwidthGroup {
+  name: string
+  /** 是否继续遵守会话（全局/备用）限速 */
+  honors_session_limits: boolean
+  /** 上传限速 (KB/s) */
+  speed_limit_up: number
+  /** 上传限速是否生效 */
+  speed_limit_up_enabled: boolean
+  /** 下载限速 (KB/s) */
+  speed_limit_down: number
+  /** 下载限速是否生效 */
+  speed_limit_down_enabled: boolean
+}
+
+export interface GroupGetResponse {
+  arguments: { group: BandwidthGroup[] }
+  result: string
+}
+
+export interface GroupSetArgs {
+  name: string
+  honors_session_limits?: boolean
+  speed_limit_up?: number
+  speed_limit_up_enabled?: boolean
+  speed_limit_down?: number
+  speed_limit_down_enabled?: boolean
+}
+
 export type TorrentGetFormat = 'objects' | 'table'
 
 function decodeTorrentTable(response: TorrentGetResponse, fields: string[]): TorrentGetResponse {
@@ -696,6 +728,10 @@ export const rpc = {
   torrentVerify: (ids: number[] | number) => callRpc('torrent-verify', { ids }),
   torrentReannounce: (ids: number[] | number) => callRpc('torrent-reannounce', { ids }),
   torrentSet: (args: TorrentSetArgs) => callRpc('torrent-set', args),
+  // 带宽组（Transmission 4.0+）
+  groupGet: (names?: string | string[]) =>
+    callRpc<GroupGetResponse>('group-get', names ? { name: names } : {}),
+  groupSet: (args: GroupSetArgs) => callRpc('group-set', args),
   torrentSetLocation: (ids: number[] | number, location: string, move: boolean = true) =>
     callRpc('torrent-set-location', { ids, location, move }),
   // 队列相关

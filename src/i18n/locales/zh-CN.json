@@ -224,7 +224,6 @@
   "otherTorrentSetting": {
     "title": "修改限速等限制属性",
     "selectedCount": "选中总数：{count}",
-    "useGlobalUploadLimit": "使用全局上传限制",
     "sequentialDownload": "顺序下载",
     "enableDownloadLimit": "启用最大下载速度限制",
     "enableUploadLimit": "启用最大上传速度限制",
@@ -235,7 +234,11 @@
     "torrent": "种子",
     "unlimited": "无限制",
     "modifySuccess": "修改成功",
-    "modifyFailed": "修改失败"
+    "modifyFailed": "修改失败",
+    "honorsSessionLimits": "全局限速",
+    "honorsKeep": "保持不变",
+    "honorsHonor": "遵守全局限速",
+    "honorsIgnore": "不遵守（突破全局）"
   },
   "changeTracker": {
     "title": "修改种子tracker",
@@ -265,7 +268,22 @@
     "remove": "删除规则",
     "moveUp": "上移规则",
     "moveDown": "下移规则",
-    "liveStats": "匹配 {count} 个种子 · 当前 ↑ {upload} · ↓ {download}"
+    "liveStats": "匹配 {count} 个种子 · 当前 ↑ {upload} · ↓ {download}",
+    "serverHint": "站点限速由服务端带宽组执行：每个站点一个带宽组，组内种子共享同一份速度上限，关闭页面也持续生效；带宽组始终遵守全局限速，实际速度取“站点组限速”和“全局限速”的较小值。规则修改会立即写入 daemon；页面打开时会自动把匹配的种子同步到对应站点组（无需安装任何服务端组件）。没有页面打开时新增的种子会在下次打开页面后归组，期间仅受全局限速约束。",
+    "loadFailed": "加载服务端带宽组失败：{message}",
+    "importLegacy": "导入本地旧规则",
+    "importLegacyConfirm": "把本浏览器保存的旧规则导入为服务端带宽组，并清理旧规则写入的种子级限速？",
+    "importLegacySuccess": "已导入 {rules} 条规则，更新 {torrents} 个种子归属，清理 {limits} 处种子级限速",
+    "repairGlobal": "修复全局限速",
+    "repairGlobalConfirm": "把所有“不遵守全局限速”的种子恢复为遵守全局限速？",
+    "repairGlobalSuccess": "已恢复 {count} 个种子的全局限速",
+    "clearTorrentLimits": "清理站点种子级限速",
+    "clearTorrentLimitsConfirm": "清除已归入站点带宽组的种子的单独限速（只保留站点组限速与全局限速）？",
+    "clearTorrentLimitsSuccess": "已清理 {count} 个种子的单独限速",
+    "saveSuccess": "已保存",
+    "saveFailed": "保存失败",
+    "saving": "保存中…",
+    "autoSaved": "规则存放在服务端带宽组中，修改会自动保存"
   },
   "downloadSettings": {
     "title": "下载设置",

@@ -9,9 +9,13 @@
   >
     <div class="mb-2">{{ $t('otherTorrentSetting.selectedCount', { count: localSelectedKeys.length }) }}</div>
     <div class="item">
-      <n-checkbox v-model:checked="formData.honorsSessionLimits">{{
-        $t('otherTorrentSetting.useGlobalUploadLimit')
-      }}</n-checkbox>
+      <div>{{ $t('otherTorrentSetting.honorsSessionLimits') }}</div>
+      <n-select
+        v-model:value="honorsMode"
+        :options="honorsModeOptions"
+        class="w-[240px]"
+        :consistent-menu-width="false"
+      />
     </div>
     <div class="item" v-if="sessionStore?.rpcVersion >= 18">
       <n-checkbox v-model:checked="formData.sequential_download">{{
@@ -102,9 +106,15 @@ const localSelectedKeys = ref<number[]>([])
 const props = defineProps<{
   ids?: number[]
 }>()
+// 全局限速开关：keep 表示不改动（避免批量修改时误关闭全局限速）
+const honorsMode = ref<'keep' | 'honor' | 'ignore'>('keep')
+const honorsModeOptions = computed(() => [
+  { label: $t('otherTorrentSetting.honorsKeep'), value: 'keep' },
+  { label: $t('otherTorrentSetting.honorsHonor'), value: 'honor' },
+  { label: $t('otherTorrentSetting.honorsIgnore'), value: 'ignore' }
+])
+
 const formData = reactive({
-  // 使用全局上传限制
-  honorsSessionLimits: false,
   // 做种不活动时间限制 (分钟)
   seedIdleLimit: 30,
   // 使用哪种做种不活动模式。Use global (0), torrent (1), or unlimited (2) limit.
@@ -138,7 +148,7 @@ watch(show, (v) => {
     const ids = getSelectIds(props.ids, torrentStore.selectedKeys)
     localSelectedKeys.value = ids
     const firstTorrent = torrentStore.torrents.find((t) => ids.includes(t.id))
-    formData.honorsSessionLimits = firstTorrent?.honorsSessionLimits || false
+    honorsMode.value = 'keep'
     formData.seedIdleLimit = firstTorrent?.seedIdleLimit || 30
     formData.seedIdleMode = firstTorrent?.seedIdleMode || 0
     formData.seedRatioLimit = firstTorrent?.seedRatioLimit || 2.0
@@ -162,7 +172,11 @@ async function onConfirm() {
   }
   loading.value = true
   try {
-    await rpc.torrentSet({ ids, ...formData })
+    const payload = {
+      ...formData,
+      ...(honorsMode.value === 'keep' ? {} : { honorsSessionLimits: honorsMode.value === 'honor' })
+    }
+    await rpc.torrentSet({ ids, ...payload })
     show.value = false
     message.success($t('otherTorrentSetting.modifySuccess'))
     await torrentStore.fetchTorrents(true)

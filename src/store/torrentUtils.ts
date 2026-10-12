@@ -1,4 +1,5 @@
 import type { Torrent, TrackerStat } from '@/api/rpc'
+import { matchesSiteKey, normalizeSiteKey } from '@/utils/siteLimitRules'
 import { statusFilterFunMap, statusFilters } from '@/const/status'
 import { Status } from '@/types/tr'
 import { getTorrentProgress } from '@/utils/torrentProgress'
@@ -14,30 +15,9 @@ export interface IMenuItem {
 }
 
 /** 将 Tracker 地址转换为适合展示和匹配的站点键。 */
-export const getTrackerSiteKey = (value: string, ignoredPrefixes: string[] = []) => {
-  let host = typeof value === 'string' ? value.trim().toLowerCase() : ''
-  try {
-    host = new URL(host.includes('://') ? host : `https://${host}`).hostname.toLowerCase()
-  } catch {
-    host = host.replace(/^[a-z]+:\/\//, '').split('/')[0].replace(/:\d+$/, '')
-  }
-  const labels = host.split('.').filter(Boolean)
-  if (labels.length > 2) {
-    const prefix = labels[0]
-    const prefixes = new Set(['www', ...ignoredPrefixes.map((item) => item.trim().toLowerCase()).filter(Boolean)])
-    const isIgnoredPrefix = Array.from(prefixes).some((item) => {
-      return prefix === item || (prefix.startsWith(item) && /^\d+$/.test(prefix.slice(item.length)))
-    })
-    if (isIgnoredPrefix) {
-      labels.shift()
-    }
-  }
-  return labels.join('.')
-}
+export const getTrackerSiteKey = normalizeSiteKey
 /** 检查规则模式是否匹配种子关联的任一站点键。pattern 和 sites 中的值均应已通过 getTrackerSiteKey 归一化。 */
-export const matchesTrackerHost = (sites: Set<string>, pattern: string): boolean => {
-  return Array.from(sites).some((host) => host === pattern || host.endsWith(`.${pattern}`))
-}
+export const matchesTrackerHost = matchesSiteKey
 
 
 const trackerSitesCache = new Map<
