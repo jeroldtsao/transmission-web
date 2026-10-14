@@ -70,13 +70,15 @@ export function useCommonViewport() {
       // 第一个绘制的单元格绘制的部分
       const xx = hiddenWidth - newLeft
       let w = xx
+      let end = torrentStore.visibleColumns.length - 1
       for (let i = start + 1; i < torrentStore.visibleColumns.length; i++) {
         w += torrentStore.visibleColumns[i].width || 0
         if (w >= newWidth) {
-          visibleEndCol.value = Math.min(torrentStore.visibleColumns.length - 1, i + virtualList.bufferColumnSize)
+          end = Math.min(torrentStore.visibleColumns.length - 1, i + virtualList.bufferColumnSize)
           break
         }
       }
+      visibleEndCol.value = end
     }
   }
 

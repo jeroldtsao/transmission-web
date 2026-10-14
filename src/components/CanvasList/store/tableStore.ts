@@ -75,9 +75,9 @@ export const useTableStore = defineStore('CanvasTable', () => {
     { flush: 'post' }
   )
 
-  // 监听左侧滚动条位置和列宽度
+  // 监听左侧滚动条位置、视口宽度以及列宽度变化
   watch(
-    [virtualList.scrollLeft, virtualList.clientWidth],
+    [() => virtualList.scrollLeft.value, () => virtualList.clientWidth.value, () => torrentStore.mapColumnWidth],
     ([newLeft, newWidth]) => {
       viewport.updateColumnViewport(newLeft, newWidth)
     },

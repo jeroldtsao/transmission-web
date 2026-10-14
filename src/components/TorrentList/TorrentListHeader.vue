@@ -140,20 +140,29 @@ function onResizerPointerDown(e: PointerEvent, col: { key: string; width: number
     resizeColKey.value = null
     document.body.style.cursor = ''
     try {
-      dom.releasePointerCapture(pointerId)
+      if (dom.hasPointerCapture(pointerId)) {
+        dom.releasePointerCapture(pointerId)
+      }
     } catch {
       // 忽略
     }
     dom.removeEventListener('pointermove', onMove)
     dom.removeEventListener('pointerup', cleanup)
     dom.removeEventListener('pointercancel', cleanup)
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', cleanup)
+    window.removeEventListener('pointercancel', cleanup)
+    window.removeEventListener('mouseup', cleanup)
   }
 
   dom.addEventListener('pointermove', onMove)
   dom.addEventListener('pointerup', cleanup)
   dom.addEventListener('pointercancel', cleanup)
+  window.addEventListener('pointermove', onMove)
+  window.addEventListener('pointerup', cleanup)
+  window.addEventListener('pointercancel', cleanup)
+  window.addEventListener('mouseup', cleanup)
 }
-
 function onTableHeaderContextMenu(e: MouseEvent) {
   e.preventDefault()
   e.stopPropagation()

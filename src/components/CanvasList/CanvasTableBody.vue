@@ -348,14 +348,14 @@ function onMouseMove(e: MouseEvent) {
     const row = filteredTorrents.value[rowIndex]
     if (row) {
       hoverRowIndex.value = rowIndex
-      scheduleDraw(false)
+      scheduleDraw()
     }
   }
 }
 
 function onMouseLeave() {
   hoverRowIndex.value = null
-  scheduleDraw(false)
+  scheduleDraw()
 }
 
 function onRowClick(e: any) {
@@ -442,26 +442,25 @@ onMounted(() => {
   })
 })
 
-function scheduleDraw(isResize: boolean = false) {
+function scheduleDraw() {
   if (rafId !== null) {
     cancelAnimationFrame(rafId)
   }
   rafId = requestAnimationFrame(() => {
-    if (isResize) {
-      updateSize()
-    }
-    // const d = performance.now()
     drawBody()
-    // console.debug(
-    //   'drawBody',
-    //   performance.now() - d + 'ms',
-    //   'draw Rows: ',
-    //   tableStore.visibleEnd - tableStore.visibleStart
-    // )
     rafId = null
   })
 }
 
+// Canvas 尺寸必须与 tableMinWidth 严格同步：放在独立 watch 中同步执行，
+// 不能与绘制合并在 rAF 里 —— rAF 可能被取消或延迟，导致尺寸更新丢失、右侧列出现空白
+watch(
+  () => torrentStore.tableMinWidth,
+  () => {
+    updateSize()
+  },
+  { flush: 'post' }
+)
 // 合并渲染触发器，避免多个独立的 watch
 const renderTriggers = computed(() => ({
   // 布局相关
@@ -485,22 +484,8 @@ const renderTriggers = computed(() => ({
 // 替换多个 watch 为单个合并的 watch
 watch(
   renderTriggers,
-  (newVal, oldVal) => {
-    let needsResize = false
-
-    // 检查是否需要重新计算尺寸
-    if (
-      newVal.clientHeight !== oldVal?.clientHeight ||
-      newVal.clientWidth !== oldVal?.clientWidth ||
-      newVal.tableMinWidth !== oldVal?.tableMinWidth ||
-      newVal.visibleColumns !== oldVal?.visibleColumns ||
-      newVal.selectMode !== oldVal?.selectMode ||
-      newVal.singleLine !== oldVal?.singleLine
-    ) {
-      needsResize = true
-    }
-
-    scheduleDraw(needsResize)
+  () => {
+    scheduleDraw()
   },
   { flush: 'post' }
 )
