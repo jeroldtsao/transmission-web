@@ -136,8 +136,19 @@
           </div>
           <div class="info-item">
             <span>{{ t('torrentDetail.general.userLabels') }}</span>
-            <div class="flex gap-1 flex-1">
-              <n-tag v-for="label in torrent.labels" :key="label" size="small" type="primary">
+            <div class="flex flex-wrap gap-1.5 flex-1 items-center">
+              <n-tag
+                v-for="label in torrent.labels"
+                :key="label"
+                size="small"
+                round
+                :bordered="true"
+                :color="{
+                  color: getTagThemeColor(label, isDark).bgColor,
+                  textColor: getTagThemeColor(label, isDark).textColor,
+                  borderColor: getTagThemeColor(label, isDark).borderColor
+                }"
+              >
                 {{ label }}
               </n-tag>
               <span v-if="!torrent.labels?.length">-</span>
@@ -156,6 +167,10 @@ import { formatSpeed, formatSize, timeToStr } from '@/utils'
 import { getStatusString, Status } from '@/types/tr'
 import { getTorrentProgress } from '@/utils/torrentProgress'
 import { getTorrentError } from '@/store/torrentUtils'
+import { getTagThemeColor } from '@/utils/tagColor'
+import { useSettingStore } from '@/store'
+const settingStore = useSettingStore()
+const isDark = computed(() => settingStore.setting.theme === 'dark')
 import dayjs from 'dayjs'
 import { useI18n } from 'vue-i18n'
 

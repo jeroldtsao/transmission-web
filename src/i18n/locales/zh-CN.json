@@ -317,7 +317,14 @@
     "defaultTrackers": "默认tracker列表",
     "defaultTrackersPlaceholder": "默认tracker列表",
     "ignoredPrefixes": "忽略的 Tracker 前缀",
-    "ignoredPrefixesHint": "当 Tracker 的子域名看起来像这些字符串之一 +（可选）数字时，它将被省略。这会影响过滤器中的分组和表格列中的显示。您可以在此处使用正则表达式进行更高级的过滤，列表将使用 \"|\" 组合。"
+    "ignoredPrefixesHint": "当 Tracker 的子域名看起来像这些字符串之一 +（可选）数字时，它将被省略。这会影响过滤器中的分组和表格列中的显示。您可以在此处使用正则表达式进行更高级的过滤，列表将使用 \"|\" 组合。",
+    "configSync": "配置备份与恢复",
+    "exportConfig": "导出配置文件",
+    "importConfig": "导入配置文件",
+    "exportSuccess": "配置已导出",
+    "importSuccess": "配置导入成功，已更新设置",
+    "importFailed": "配置文件格式错误，导入失败",
+    "configSyncHint": "导出当前浏览器的本地配置（常用下载目录、偏好、Tracker 规则等）以便在其他设备上直接导入恢复。"
   },
   "queueSettings": {
     "title": "队列设置",
