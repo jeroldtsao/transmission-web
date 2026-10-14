@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useSettingStore } from '@/store'
 import { useThemeVars } from 'naive-ui'
-
+import FileDropOverlay from '@/components/common/FileDropOverlay.vue'
 const settingStore = useSettingStore()
 const theme = useThemeVars()
 watch(
@@ -19,4 +19,5 @@ watch(
 
 <template>
   <router-view />
+  <FileDropOverlay />
 </template>

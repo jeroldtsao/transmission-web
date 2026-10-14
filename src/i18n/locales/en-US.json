@@ -77,7 +77,9 @@
     "pleaseSelectDir": "Please select download directory",
     "pleaseInputMagnet": "Please enter magnet links or torrent file URLs",
     "readFileFailed": "Failed to read file",
-    "readFileFailedCount": "Failed to read {count} files"
+    "readFileFailedCount": "Failed to read {count} files",
+    "dropTorrentHint": "Drop torrent files here to add",
+    "dropTorrentSubHint": "Supports single or multiple .torrent files"
   },
   "deleteDialog": {
     "title": "Delete Torrent Confirmation",

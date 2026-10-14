@@ -153,6 +153,7 @@ import SettingsDialog from '../dialog/settings/SettingsDialog.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
 import { useI18n } from 'vue-i18n'
+import { useFileDrop } from '@/composables/useFileDrop'
 const emit = defineEmits(['layoutBottom'])
 const torrentStore = useTorrentStore()
 const theme = useThemeVars()
@@ -160,7 +161,15 @@ const message = useMessage()
 const { t: $t } = useI18n()
 const addDialogType = ref<'file' | 'magnet'>('file')
 const showDeleteDialog = ref(false)
+const { showAddDialog: showDroppedAddDialog } = useFileDrop()
 const showAddMagnetDialog = ref(false)
+watch(showDroppedAddDialog, (val) => {
+  if (val) {
+    addDialogType.value = 'file'
+    showAddMagnetDialog.value = true
+    showDroppedAddDialog.value = false
+  }
+})
 const showChangeDirDialog = ref(false)
 const showChangeLabelDialog = ref(false)
 const showSettingsDialog = ref(false)

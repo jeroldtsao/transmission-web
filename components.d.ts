@@ -29,6 +29,7 @@ declare module 'vue' {
     DirMenu: typeof import('./src/components/SiderbarView.vue/menus/DirMenu.vue')['default']
     DownloadSettings: typeof import('./src/components/dialog/settings/DownloadSettings.vue')['default']
     ErrMenu: typeof import('./src/components/SiderbarView.vue/menus/ErrMenu.vue')['default']
+    FileDropOverlay: typeof import('./src/components/common/FileDropOverlay.vue')['default']
     FilesTab: typeof import('./src/components/TorrentDetail/tabs/FilesTab.vue')['default']
     FixedDecimal: typeof import('./src/components/TorrentList/cells/FixedDecimal.vue')['default']
     GeneralTab: typeof import('./src/components/TorrentDetail/tabs/GeneralTab.vue')['default']

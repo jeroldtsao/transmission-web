@@ -91,6 +91,7 @@ import { useDownloadDirOptions } from '@/composables/useDownloadDirOptions'
 import type { UploadFileInfo } from 'naive-ui'
 import { useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import { useFileDrop } from '@/composables/useFileDrop'
 const isMobile = useIsSmallScreen()
 const labelType = computed(() => (isMobile.value ? 'top' : 'left'))
 const torrentStore = useTorrentStore()
@@ -106,6 +107,7 @@ const message = useMessage()
 const loading = ref(false)
 const magnetLink = ref('')
 const uploadFileList = ref<UploadFileInfo[]>([])
+const { consumePendingFiles } = useFileDrop()
 const selectedTorrentFiles = ref<
   Array<{
     id: string
@@ -382,6 +384,19 @@ watch(show, (v) => {
     magnetLink.value = ''
     uploadFileList.value = []
     selectedTorrentFiles.value = []
+
+    // 如果是由拖拽唤起，提取待添加的文件并自动解析
+    const droppedFiles = consumePendingFiles()
+    if (droppedFiles.length > 0) {
+      const initialList: UploadFileInfo[] = droppedFiles.map((file, idx) => ({
+        id: `drop-${Date.now()}-${idx}`,
+        name: file.name,
+        status: 'finished',
+        file
+      }))
+      uploadFileList.value = initialList
+      void onFileChange({ fileList: initialList })
+    }
   }
 })
 </script>

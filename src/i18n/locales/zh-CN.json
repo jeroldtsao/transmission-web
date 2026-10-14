@@ -77,7 +77,9 @@
     "pleaseSelectDir": "请选择下载目录",
     "pleaseInputMagnet": "请输入磁力或种子链接",
     "readFileFailed": "读取文件失败",
-    "readFileFailedCount": "{count} 个文件读取失败"
+    "readFileFailedCount": "{count} 个文件读取失败",
+    "dropTorrentHint": "拖放种子文件到此处即可添加",
+    "dropTorrentSubHint": "支持单文件或多个 .torrent 文件批量添加"
   },
   "deleteDialog": {
     "title": "删除种子确认",
