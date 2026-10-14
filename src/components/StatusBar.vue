@@ -35,6 +35,7 @@
           <div :class="$style.trackerStatsTitle">{{ $t('statusBar.trackerSpeed') }}</div>
           <div v-for="item in trackerSpeedStats" :key="item.id" :class="$style.trackerStatsRow">
             <span :class="$style.trackerStatsName">{{ item.site }}</span>
+            <span v-if="item.limit">{{ item.limit }}</span>
             <span>↑ {{ formatSpeed(item.upload) }}</span>
             <span>↓ {{ formatSpeed(item.download) }}</span>
           </div>
@@ -77,8 +78,9 @@
 import DoubleArrowDown from '@/assets/icons/doubleArrowDown.svg?component'
 import DoubleArrowUp from '@/assets/icons/doubleArrowUp.svg?component'
 import GlobalSpeedLimitDialog from '@/components/dialog/GlobalSpeedLimitDialog.vue'
-import { useSessionStore, useSettingStore, useStatsStore, useTorrentStore } from '@/store'
+import { useSessionStore, useSettingStore, useSiteLimitStore, useStatsStore, useTorrentStore } from '@/store'
 import { formatSize, formatSpeed } from '@/utils'
+import { toSiteGroupName } from '@/utils/siteLimitRules'
 import { InformationCircle as InfoIcon, Moon as MoonIcon, Sunny as SunIcon, WifiSharp } from '@vicons/ionicons5'
 import { useI18n } from 'vue-i18n'
 import { getTorrentTrackerSites, getTrackerSiteKey, matchesTrackerHost } from '@/store/torrentUtils'
@@ -90,6 +92,7 @@ const props = defineProps<{
 const sessionStore = useSessionStore()
 const torrentStore = useTorrentStore()
 const settingStore = useSettingStore()
+const siteLimitStore = useSiteLimitStore()
 const statsStore = useStatsStore()
 const { t: $t } = useI18n()
 
@@ -122,7 +125,33 @@ const selectedSize = computed(() => {
     .reduce((sum, t) => sum + (t.sizeWhenDone || 0), 0)
 })
 
+const formatSiteLimit = (rule: { uploadLimit: number | null; downloadLimit: number | null }) => {
+  const parts: string[] = []
+  if (rule.uploadLimit) {
+    parts.push(`↑ ${formatSpeed(rule.uploadLimit * 1024)}`)
+  }
+  if (rule.downloadLimit) {
+    parts.push(`↓ ${formatSpeed(rule.downloadLimit * 1024)}`)
+  }
+  return parts.join(' / ')
+}
+
 const trackerSpeedStats = computed(() => {
+  // Transmission 4.0+：规则存放在服务端带宽组里，按种子所属组统计
+  if (siteLimitStore.serverMode) {
+    const stats = siteLimitStore.speedByGroup
+    return siteLimitStore.enabledRules.map((rule) => {
+      const group = toSiteGroupName(rule.key)
+      const current = stats.get(group)
+      return {
+        id: group,
+        site: rule.key,
+        limit: formatSiteLimit(rule),
+        upload: current?.upload || 0,
+        download: current?.download || 0
+      }
+    })
+  }
   const rules = (settingStore.setting.trackerLimitRules || []).filter(
     (rule) =>
       rule &&
@@ -134,6 +163,7 @@ const trackerSpeedStats = computed(() => {
   const stats = rules.map((rule) => ({
     id: rule.id,
     site: getTrackerSiteKey(rule.pattern, settingStore.setting.ignoredTrackerPrefixes),
+    limit: formatSiteLimit(rule),
     upload: 0,
     download: 0
   }))

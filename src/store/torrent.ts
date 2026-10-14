@@ -77,6 +77,7 @@ const pollingFields = [
   'id',
   'name',
   'labels',
+  'group',
   'downloadDir',
   'bandwidthPriority',
   'activityDate',
@@ -131,6 +132,8 @@ export const useTorrentStore = defineStore('torrent', () => {
   const settingStore = useSettingStore()
   const sessionStore = useSessionStore()
   const applyingTrackerRules = ref(false)
+  // 每次种子轮询结束后自增，供其它 store 挂载轻量同步逻辑（如站点限速归组）
+  const fetchTick = ref(0)
   const trackerRuleSignatures = new Map<number, string>()
   const fetching = ref(false)
   let trackerRuleApplyPending = false
@@ -305,6 +308,10 @@ export const useTorrentStore = defineStore('torrent', () => {
   }
 
   async function applyTrackerLimitRules(items: Torrent[]) {
+    // Transmission 4.0+ 由服务端带宽组（site: 组）执行站点限速，前端不再写种子级限速
+    if (settingStore.siteLimitServerEnabled !== false) {
+      return
+    }
     if (applyingTrackerRules.value) {
       trackerRuleApplyPending = true
       return
@@ -329,10 +336,12 @@ export const useTorrentStore = defineStore('torrent', () => {
       if (rule?.uploadLimit != null) {
         args.uploadLimited = true
         args.uploadLimit = Math.max(1, Math.round(rule.uploadLimit))
+        args.honorsSessionLimits = true
       }
       if (rule?.downloadLimit != null) {
         args.downloadLimited = true
         args.downloadLimit = Math.max(1, Math.round(rule.downloadLimit))
+        args.honorsSessionLimits = true
       }
       if (Object.keys(args).length === 0) {
         if (!rule) {
@@ -343,6 +352,7 @@ export const useTorrentStore = defineStore('torrent', () => {
       const signature = `${rule?.id || 'none'}:${JSON.stringify(args)}`
       const ruleAlreadyApplied =
         !!rule &&
+        torrent.honorsSessionLimits === true &&
         (rule.uploadLimit == null || (torrent.uploadLimited === true && torrent.uploadLimit === args.uploadLimit)) &&
         (rule.downloadLimit == null ||
           (torrent.downloadLimited === true && torrent.downloadLimit === args.downloadLimit))
@@ -448,6 +458,7 @@ export const useTorrentStore = defineStore('torrent', () => {
       if (fullFetch) {
         lastMetadataFetchAt = Date.now()
       }
+      fetchTick.value += 1
       void applyTrackerLimitRules(newRes)
     } finally {
       fetching.value = false
@@ -496,6 +507,7 @@ export const useTorrentStore = defineStore('torrent', () => {
   return {
     getColumnTitle,
     torrents,
+    fetchTick,
     filterTorrents,
     mapFilterTorrentsIndex,
     statusFilter,
