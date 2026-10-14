@@ -428,6 +428,14 @@ onMounted(async () => {
     syncServerRules()
   }
 })
+
+onBeforeUnmount(() => {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+    void flushServerRules()
+  }
+})
 </script>
 
 <style scoped lang="less">

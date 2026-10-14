@@ -148,7 +148,12 @@ watch(show, (v) => {
     const ids = getSelectIds(props.ids, torrentStore.selectedKeys)
     localSelectedKeys.value = ids
     const firstTorrent = torrentStore.torrents.find((t) => ids.includes(t.id))
-    honorsMode.value = 'keep'
+    // 单选单个种子时，回填其真实的全局限速遵守状态；多选批量操作时默认保持不变（keep）
+    if (ids.length === 1 && firstTorrent) {
+      honorsMode.value = firstTorrent.honorsSessionLimits !== false ? 'honor' : 'ignore'
+    } else {
+      honorsMode.value = 'keep'
+    }
     formData.seedIdleLimit = firstTorrent?.seedIdleLimit || 30
     formData.seedIdleMode = firstTorrent?.seedIdleMode || 0
     formData.seedRatioLimit = firstTorrent?.seedRatioLimit || 2.0

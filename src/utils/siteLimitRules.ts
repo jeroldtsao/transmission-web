@@ -222,6 +222,10 @@ export const planSiteGroupAssignments = (
       continue
     }
     if (desired) {
+      // 用户自建的分组（非 site: 开头）尊重用户手动配置，不强行覆盖
+      if (current && !current.startsWith(SITE_GROUP_PREFIX)) {
+        continue
+      }
       const ids = assign.get(desired) || []
       ids.push(torrent.id)
       assign.set(desired, ids)
