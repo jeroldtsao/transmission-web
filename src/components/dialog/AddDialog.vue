@@ -214,19 +214,27 @@ async function addTask(metainfo: string, filename?: string): Promise<'added' | '
     })
     console.debug('添加种子', res)
 
-    // 自动追加本地默认 trackers
+    // 自动追加本地默认 trackers（跳过私有种子 / PT 种子，避免污染私有种子引发警告或封禁）
     const addedTorrent = res.arguments['torrent-added'] || res.arguments['torrent-duplicate']
     if (addedTorrent?.id) {
       const defaultTrackers = settingStore.setting.defaultTrackers || []
       if (defaultTrackers.length > 0) {
         try {
-          await trpc.torrentSet({
-            ids: addedTorrent.id,
-            trackerAdd: defaultTrackers
-          })
-          console.debug(`已自动为种子 ${addedTorrent.id} 追加默认 trackers`)
+          // 查询新添加种子的私有属性
+          const checkRes = await trpc.torrentGet(['id', 'isPrivate'], addedTorrent.id)
+          const torrentInfo = checkRes?.arguments?.torrents?.[0]
+          const isPrivate = torrentInfo?.isPrivate === true
+          if (!isPrivate) {
+            await trpc.torrentSet({
+              ids: addedTorrent.id,
+              trackerAdd: defaultTrackers
+            })
+            console.debug(`已自动为公网种子 ${addedTorrent.id} 追加默认 trackers`)
+          } else {
+            console.debug(`种子 ${addedTorrent.id} 为私有/PT 种子，跳过追加默认 trackers`)
+          }
         } catch (err) {
-          console.error('追加默认 trackers 失败', err)
+          console.error('检查或追加默认 trackers 失败', err)
         }
       }
     }

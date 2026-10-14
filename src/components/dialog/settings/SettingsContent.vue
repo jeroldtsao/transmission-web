@@ -177,7 +177,7 @@ const formInit = () => {
     settingStore.setting.enableDownloadDirSuggestions !== false
   sessionForm.value['custom-download-dirs'] = [...(settingStore.setting.customDownloadDirs || [])]
   sessionForm.value['default-trackers'] =
-    session.value?.['default-trackers'] || settingStore.setting.defaultTrackers.join('\n')
+    session.value?.['default-trackers'] ?? (settingStore.setting.defaultTrackers || []).join('\n')
 }
 
 onMounted(() => {
@@ -217,13 +217,17 @@ async function onSave() {
       : []
     settingStore.setting.customDownloadDirs = customDirs
 
-    if (sessionForm.value['default-trackers']) {
-      sessionForm.value['default-trackers'] = (sessionForm.value['default-trackers'] as string)
-        .split('\n')
-        .map((item: string) => item.trim())
-        .filter(Boolean)
-        .join('\n')
-    }
+    const rawDefaultTrackers = sessionForm.value['default-trackers']
+    const parsedDefaultTrackers =
+      typeof rawDefaultTrackers === 'string'
+        ? rawDefaultTrackers
+            .split('\n')
+            .map((item: string) => item.trim())
+            .filter(Boolean)
+        : []
+    sessionForm.value['default-trackers'] = parsedDefaultTrackers.join('\n')
+    // 同时同步本地 store，允许用户完全清空默认 tracker 列表
+    settingStore.setting.defaultTrackers = parsedDefaultTrackers
 
     await rpc.sessionSet(
       omit(sessionForm.value, [
