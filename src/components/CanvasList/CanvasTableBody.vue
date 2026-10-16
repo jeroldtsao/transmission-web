@@ -455,7 +455,7 @@ function scheduleDraw() {
 // Canvas 尺寸必须与 tableMinWidth 严格同步：放在独立 watch 中同步执行，
 // 不能与绘制合并在 rAF 里 —— rAF 可能被取消或延迟，导致尺寸更新丢失、右侧列出现空白
 watch(
-  () => torrentStore.tableMinWidth,
+  [() => torrentStore.tableMinWidth, () => tableStore.clientHeight],
   () => {
     updateSize()
   },
